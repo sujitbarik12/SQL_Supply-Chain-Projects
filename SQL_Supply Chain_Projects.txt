@@ -1,0 +1,118 @@
+-- Checking record count in the table
+SELECT COUNT(*) FROM tmp.gstin_data;
+
+-- Dropping a column from the table
+ALTER TABLE tmp.gstin_data DROP COLUMN Supplier_GSTIN;
+
+-- Truncating the table
+TRUNCATE TABLE tmp.gstin_data;
+
+-- Creating a new table with GSTIN column
+CREATE TABLE tmp.gstin_data (
+    gstin VARCHAR(15)
+);
+
+-- Fetching records that match GSTIN from the main registration table
+SELECT * FROM prod_dgarm.gstr_reg_data_main 
+WHERE gstin IN (SELECT * FROM tmp.gstin_data);
+
+-- Creating a table with matching PAN, Email, Mobile, and Trade Name
+CREATE TABLE tmp.gstin_pan_email_mobile_data AS 
+SELECT a.*, b.pan_num, b.email_id, b.mob_num, b.reg_nam, b.trade_nam 
+FROM tmp.gstin_data a 
+LEFT JOIN prod_dgarm.gstr_reg_data_main b 
+ON a.gstin = b.gstin;
+
+-- Fetching all records from the created table
+SELECT * FROM tmp.gstin_pan_email_mobile_data;
+
+-- Creating a table with GSTIN matched on PAN
+CREATE TABLE tmp.gstin_matched_on_pan AS 
+SELECT a.*, b.gstin AS gstin_matched_on_pan 
+FROM tmp.gstin_pan_email_mobile_data a 
+LEFT JOIN prod_dgarm.gstr_reg_data_main b 
+ON SUBSTRING(a.gstin, 3, 10) = b.pan_num 
+ORDER BY 1;
+
+SELECT * FROM tmp.gstin_matched_on_pan;
+
+-- Creating a table with GSTIN matched on Phone Number
+CREATE TABLE tmp.gstin_matched_on_phone AS 
+SELECT a.*, b.gstin AS gstin_matched_on_phone_number 
+FROM tmp.gstin_pan_email_mobile_data a 
+LEFT JOIN prod_dgarm.gstr_reg_data_main b 
+ON a.mob_num = b.mob_num 
+ORDER BY 1;
+
+SELECT * FROM tmp.gstin_matched_on_phone;
+
+-- Creating a table with GSTIN matched on Email
+CREATE TABLE tmp.gstin_matched_on_email AS 
+SELECT a.*, b.gstin AS gstin_matched_on_email 
+FROM tmp.gstin_pan_email_mobile_data a 
+LEFT JOIN prod_dgarm.gstr_reg_data_main b 
+ON a.email_id = b.email_id 
+ORDER BY 1;
+
+SELECT * FROM tmp.gstin_matched_on_email;
+
+-- Creating a table with GSTIN matched on Registered Name
+CREATE TABLE tmp.gstin_matched_on_reg_name AS 
+SELECT a.*, b.gstin AS gstin_matched_on_reg_name 
+FROM tmp.gstin_pan_email_mobile_data a 
+LEFT JOIN prod_dgarm.gstr_reg_data_main b 
+ON a.reg_nam = b.reg_nam 
+ORDER BY 1;
+
+SELECT * FROM tmp.gstin_matched_on_reg_name;
+
+-- Creating a table with GSTIN matched on Trade Name
+CREATE TABLE tmp.gstin_matched_on_trade_name AS 
+SELECT a.*, b.gstin AS gstin_matched_on_trade_name 
+FROM tmp.gstin_pan_email_mobile_data a 
+LEFT JOIN prod_dgarm.gstr_reg_data_main b 
+ON a.trade_nam = b.trade_nam 
+ORDER BY 1;
+
+SELECT * FROM tmp.gstin_matched_on_trade_name;
+
+-- Checking records in the main registration table based on GSTIN
+SELECT * FROM prod_dgarm.gstr_reg_data_main grdm 
+WHERE gstin IN (SELECT * FROM tmp.gstin_data);
+
+-- Creating a table with PAN, Email, and Mobile matched records
+CREATE TABLE tmp.gstin_pan_data AS 
+SELECT a.*, b.pan_num, b.email_id, b.mob_num, b.reg_nam, b.trade_nam  
+FROM tmp.gstin_data a 
+LEFT JOIN prod_dgarm.gstr_reg_data_main b 
+ON a.gstin = b.gstin;
+
+SELECT * FROM tmp.gstin_pan_data;
+
+-- Creating a table with GSTIN matched on PAN (another variation)
+CREATE TABLE tmp.gstin_matched_on_pan_v2 AS 
+SELECT a.*, b.gstin AS gstin_matched_on_pan 
+FROM tmp.gstin_pan_data a 
+LEFT JOIN prod_dgarm.gstr_reg_data_main b 
+ON SUBSTRING(a.gstin, 3, 10) = b.pan_num 
+ORDER BY 1;
+
+-- Creating a table with GSTIN matched on Email
+CREATE TABLE tmp.gstin_matched_on_email_v2 AS 
+SELECT a.*, b.gstin AS gstin_matched_on_email 
+FROM tmp.gstin_pan_data a 
+LEFT JOIN prod_dgarm.gstr_reg_data_main b 
+ON a.email_id = b.email_id 
+ORDER BY 1;
+
+SELECT * FROM tmp.gstin_matched_on_email_v2;
+
+-- Truncating and recreating GSTIN Matched on PAN table
+TRUNCATE TABLE tmp.gstin_matched_on_pan;
+
+CREATE TABLE tmp.gstin_matched_on_pan AS 
+SELECT a.*, b.gstin AS gstin_matched_on_pan 
+FROM tmp.gstin_pan_data a 
+LEFT JOIN prod_dgarm.gstr_reg_data_main b 
+ON SUBSTRING(a.gstin, 3, 10) = b.pan_num 
+ORDER BY 1;
